@@ -25,12 +25,10 @@ class ForcePartMTD(ForcePart):
 			self.U=np.sum(self.H[:]*self.hill.h*np.exp(-(cv-self.B[:])**2/2./w2))
 		elif self.hill.id=='cell':
 			rvecs=system.cell.rvecs
-			uc=UnitCell(np.array(rvecs))
-        		abc,abg=uc.parameters
-        		cv=abc[self.hill.atoms]
+			cv=rvecs[self.hill.atoms,self.hill.atoms]
 			g=np.zeros((3,3))
 			g[self.hill.atoms,self.hill.atoms]=-np.sum(self.H[:]*self.hill.h*(cv-self.B[:])/w2*np.exp(-(cv-self.B[:])**2/2./w2))
-			self.localVTens=np.dot(rvecs,np.dot(g,rvecs.T))
+			self.localVTens=np.dot(rvecs.T,g)
 			self.U=np.sum(self.H[:]*self.hill.h*np.exp(-(cv-self.B[:])**2/2./w2))
 		elif self.hill.id=='angle':
 			cv,cvderiv=bend_angle(np.array([system.pos[self.hill.atoms[0],:],system.pos[self.hill.atoms[1],:],system.pos[self.hill.atoms[2],:]]),deriv=1)
@@ -78,9 +76,7 @@ class MTDHook(VerletHook):
 		if self.hill.id=='volume':
 			return iterative.ff.system.cell.volume		
 		elif self.hill.id=='cell':
-			uc=UnitCell(np.array(iterative.ff.system.cell.rvecs))
-                        abc,abg=uc.parameters
-                        return abc[self.hill.atoms]
+                        return iterative.ff.system.cell.rvecs[self.hill.atoms,self.hill.atoms]
 		elif self.hill.id=='angle':
 			return bend_angle(np.array([iterative.ff.system.pos[self.hill.atoms[0],:],iterative.ff.system.pos[self.hill.atoms[1],:],iterative.ff.system.pos[self.hill.atoms[2],:]]))[0]
 		else:
