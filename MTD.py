@@ -1,4 +1,4 @@
-'''RUBEN DEMUYNCK + Yaff acknowledgement'''
+'''Ruben Demuynck + Yaff acknowledgement'''
 
 from yaff import *
 import numpy as np
