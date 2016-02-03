@@ -38,6 +38,7 @@ class ForcePartMTD(ForcePart):
 			self.U=np.sum(self.H[:]*self.hill.h*np.exp(-(cv-self.B[:])**2/2./w2))
 		else:
 			raise NotImplementedError
+		return self.U
 
    	def _internal_compute(self, gpos, vtens):
 		self.determineF(self.system)
