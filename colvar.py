@@ -22,7 +22,7 @@ class Angle(CollectiveVariable):
 	def __init__(self,name,atoms):
 		if len(atoms)!=3:
 			raise ValueError('Distance is defined by two atoms, Angle three atoms and dihedral four atoms')
-		CollectiveVariable.__init__(name,'angle',atoms=atoms)
+		CollectiveVariable.__init__(self,name,'angle',atoms=atoms)
 	def get_value(self,system):
 		return bend_angle(np.array([system.pos[self.atoms[0]],system.pos[self.atoms[1]],system.pos[self.atoms[2]]]))[0]
 	def get_deriv(self,system):
@@ -37,7 +37,7 @@ class Distance(CollectiveVariable):
 	def __init__(self,name,atoms):
                 if len(atoms)!=2:
                         raise ValueError('Distance is defined by two atoms, Angle three atoms and dihedral four atoms')
-		CollectiveVariable.__init__(name,'distance',atoms=atoms)
+		CollectiveVariable.__init__(self,name,'distance',atoms=atoms)
 	def get_value(self,system):
 		return bond_length(np.array([system.pos[self.atoms[0]],system.pos[self.atoms[1]]]))[0]
 	def get_deriv(self,system):
@@ -50,7 +50,7 @@ class Distance(CollectiveVariable):
 
 class Volume(CollectiveVariable):
 	def __init__(self):
-		CollectiveVariable.__init__('volume','volume')
+		CollectiveVariable.__init__(self,'volume','volume')
 	def get_value(self,system):
 		return system.cell.volume
 	def get_force(self,g,gpos,vtens,system):
@@ -59,9 +59,9 @@ class Volume(CollectiveVariable):
 
 class CellParameter(CollectiveVariable):
 	def __init__(self,name,parameter):
-                if len(atoms)!=2:
+                if len(parameter)!=2:
                         raise ValueError('Two indexes for the cell parameters required')
-		CollectiveVariable.__init__(name,'cell',parameter=parameter)
+		CollectiveVariable.__init__(self,name,'cell',parameter=parameter)
 	def get_value(self,system):
 		return system.cell.rvecs[self.parameter[0],self.parameter[1]]
 	def get_force(self,g,gpos,vtens,system):
