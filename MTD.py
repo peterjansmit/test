@@ -69,7 +69,7 @@ class Hills(object):
 			make a guess for both the hill height and width minimizing both bias and variance of the free energy profile.
 		'''
 		self.CV=collectiveVariable
-		if width is None or height is None:
+		if width is None:
 			'''In the near future we have to add the variational approach towards metadynamics'''
 			raise NotImplementedError
 		self.w=width

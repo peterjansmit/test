@@ -46,7 +46,7 @@ class REHook(VerletHook):
 		ranks=np.arange(0,self.nems)
 		pranks=np.random.permutation(ranks)
 		sorted(self.rootdata, key=lambda x: x[0])													##NOT REALLY NECESSARY HENCE GATHER ALWAYS INSTITIONALIZES SORTED DATA
-		condition1=np.array([np.exp((1./self.rootdata[i][1]-1./self.rootdata[j][1])*(self.rootdata[j][2]-self.rootdata[i][2])/boltzmann) for i,j in zip(ranks,pranks)])
+		condition1=np.array([np.exp((1./self.rootdata[j][1]-1./self.rootdata[i][1])*(self.rootdata[j][2]-self.rootdata[i][2])/boltzmann) for i,j in zip(ranks,pranks)])
 		for i,match in enumerate(np.where(np.random.rand()<condition1)[0]):
 			if not pranks[match]==ranks[match]:
 				self.rootdata[pranks[match]][3],self.rootdata[ranks[match]][3]=self.rootdata[ranks[match]][3],self.rootdata[pranks[match]][3]
