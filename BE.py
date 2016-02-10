@@ -71,36 +71,46 @@ class REHook(VerletHook):
 				self.rootdata[pranks[match]][5],self.rootdata[ranks[match]][5]=np.sqrt(self.rootdata[pranks[match]][2]/self.rootdata[ranks[match]][2])*self.rootdata[ranks[match]][5],np.sqrt(self.rootdata[ranks[match]][2]/self.rootdata[pranks[match]][2])*self.rootdata[pranks[match]][5]
 				self.rootdata[pranks[match]][7],self.rootdata[ranks[match]][7]=self.rootdata[ranks[match]][7],self.rootdata[pranks[match]][7]
 
-class BiasExchange(object):
-	def __init__(self,replica,temp,hills,MDsteps,Metasteps,REsteps):
-		'''replicas
-			a list of VerletIntegrator objects, the size of the list should match the number of processors
-		   temp
-			a list of the temperatures (for now we only consider replica exchange for different temperatures)
-		   MDsteps
-			the number of MDsteps between each replica exchange step
-		   REsteps
-			the number of replica exchange steps
-		   hills
-			hill object for all the 
-		'''
-		###MPI information
-		comm = MPI.COMM_WORLD   #Defines the default communicator
-		num_procs = comm.Get_size()  #Stores the number of processes in size
-		rank = comm.Get_rank()  #Stores the rank (pid) of the current process
-		stat = MPI.Status()
-                state=[]
-                for i,hill in enumerate(hills):
-				if hill is not None and i!=rank:
-		                        state.append(MTD.HillsState(hill))
-		                        hill.ffPart=MTD.ForcePartMTD(replica.ff.system,hill,Metasteps)
-				else:
+class BE(VerletIntegrator):
+	def __init__(self,ff,timestep,state=None,hooks=None,velo0=None,temp0=300,scalevel0=True,time0=0,ndof=None,counter0=0,temp=None,hills=None,MetaSteps=0,RESteps=0,MDSteps=0):
+		self.steps=MDSteps
+		mtd=False
+                ###MPI information
+                comm = MPI.COMM_WORLD   #Defines the default communicator
+                num_procs = comm.Get_size()  #Stores the number of processes in size
+                rank = comm.Get_rank()  #Stores the rank (pid) of the current process
+                stat = MPI.Status()
+		state=[] if state is None else state
+		if hills is None:
+			raise NotImplementedError
+			'''
+			extraHook=REHook(rank,comm,num_procs,temp[rank],int(MDSteps/RESteps))
+			extraState=RE_ID(extraHook)
+			hooks.append(extraHook)
+			state.append(extraState)
+			VerletIntegrator.__init__(self, ff, timestep, state=state, hooks=hooks, vel0=velo0,temp0=temp0, scalevel0=scalevel0, time0=time0, ndof=ndof, counter0=counter0)
+			'''
+		else:
+			if hills[rank] is not None: mtd=True
+			for i,hill in enumerate(hills):
+				if hill is None:
 					cv=colvar.Volume()
-					hills[i]=MTD.Hills(cv,width=1.,height=0)
-					hills[i].ffPart=MTD.ForcePartMTD(replica.ff.system,hills[i],Metasteps)
-		rehook=REHook(rank,comm,num_procs,temp,MDsteps,hills)
-		replica.hooks.append(rehook)
-		replica.run(MDsteps*REsteps)
+                                        hills[i]=MTD.Hills(cv,width=1.,height=0)
+                                        hills[i].ffPart=MTD.ForcePartMTD(ff.system,hills[i],MetaSteps)
+				else:
+                        		hill.ffPart=MTD.ForcePartMTD(ff.system,hill,MetaSteps)
+			extraHook=REHook(rank,comm,num_procs,temp[rank],int(MDSteps/RESteps),hills)
+			extraState=RE_ID(extraHook)
+			hooks.append(extraHook)
+			state.append(extraState)
+			if mtd:
+				hills[rank].Hook=MTD.MTDHook(hills[rank],int(MDSteps/MetaSteps))
+				hooks.append(hills[rank].Hook)
+				state.append(MTD.HillsState(hills[rank]))
+				ff.add_part(hills[rank].ffPart)
+			VerletIntegrator.__init__(self, ff, timestep, state=state, hooks=hooks, vel0=velo0,temp0=temp0, scalevel0=scalevel0, time0=time0, ndof=ndof, counter0=counter0)
+	def RErun(self):
+		self.run(self.steps)
 
 class RE_ID(StateItem):
         def __init__(self,rehook):
